@@ -61,7 +61,11 @@ async function handleSupportAction(ctx) {
  * @param {Context} ctx - Telegram context.
  */
 async function handleDepositAction(ctx) {
-    await ctx.reply(`not implemented yet`);
+    //TODO: show user his wallet address
+    const user = await database.getUser(ctx.callbackQuery.from.id);
+    user.wallet.balance += 100;
+    await database.updateUser(user);
+    await ctx.reply(`💰 You got 100 coins!`);
 };
 
 /**
@@ -87,9 +91,10 @@ async function handleFindRoomAction(ctx) {
                 symbol: '$DEGEN',
             },
             players: [],
-            win_rate: 0,
-            capacity: 10,
+            win_rate: 0.98,
+            capacity: 2,
             min_deposit: 100,
+            state: 'open',
         });
         //TODO: fix
         const [text, kb] = renderRoomsWithKeyboard([room]);
@@ -115,7 +120,7 @@ function renderRoomsWithKeyboard(rooms) {
     const keyboard = [];
     rooms.forEach((room, idx) => {
         text += `🚪 Room: ${idx + 1}
-📈 Win rate: ${room.win_rate}
+📈 Win rate: ${room.win_rate * 100}%
 👥 Players: ${room.players.length}/${room.capacity}
 💰 Pool: ${room.pool.amount} ${room.pool.symbol}
 💵 Required Deposit: ${room.min_deposit}
@@ -134,8 +139,15 @@ function handleJoinRoomAction(queue) {
      * @param {Context} ctx
      */
     return async function(ctx) {
-        const room_id = ctx.update.callback_query.data.split('_')[1];
         const user_id = ctx.update.callback_query.from.id;
+        const user = await database.getUser(user_id);
+
+        if (user.room_id) {
+            await ctx.reply('You already joined the room :)');
+            return;
+        }
+
+        const room_id = ctx.update.callback_query.data.split('_')[1];
         await queue.add(joinRoomQueueName, { user_id, room_id })
     }
 }

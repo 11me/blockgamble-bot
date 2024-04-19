@@ -34,5 +34,6 @@
  * @property {number} capacity - Number of players room can contain.
  * @property {Player[]} players
  * @property {number} min_deposit - The minimal deposit to join the room.
+ * @property {'open' | 'active' | 'processing' |  'closed' } state
  */
 
